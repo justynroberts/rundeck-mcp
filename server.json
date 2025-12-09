@@ -1,0 +1,40 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-09-29/server.schema.json",
+  "name": "rundeck-mcp",
+  "description": "Rundeck MCP server which provides tools to interact with your Rundeck instance for job automation.",
+  "version": "0.1.0",
+  "packages": [
+    {
+      "registryType": "pypi",
+      "identifier": "rundeck-mcp",
+      "version": "0.1.0",
+      "transport": {
+        "type": "stdio"
+      },
+      "runtimeHint": "uvx",
+      "packageArguments": [
+        {
+          "type": "positional",
+          "value": "--enable-write-tools"
+        }
+      ],
+      "environmentVariables": [
+        {
+          "name": "RUNDECK_API_TOKEN",
+          "description": "Rundeck API Token - obtain from User Profile > User API Tokens in your Rundeck instance",
+          "required": true
+        },
+        {
+          "name": "RUNDECK_URL",
+          "description": "Rundeck server URL (default: http://localhost:4440)",
+          "required": false
+        },
+        {
+          "name": "RUNDECK_API_VERSION",
+          "description": "Rundeck API version (default: 44)",
+          "required": false
+        }
+      ]
+    }
+  ]
+}

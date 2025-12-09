@@ -1,0 +1,99 @@
+[project]
+name = "rundeck-mcp"
+version = "0.1.0"
+description = "Rundeck MCP Server - Model Context Protocol server for Rundeck job automation"
+readme = "README.md"
+requires-python = "~=3.12.0"
+dependencies = [
+    "mcp[cli]~=1.8",
+    "httpx~=0.28",
+    "typer~=0.16.0",
+    "python-dotenv~=1.0",
+    "pydantic~=2.10",
+]
+
+[project.scripts]
+rundeck-mcp = "rundeck_mcp.__main__:main"
+
+[tool.pyright]
+include = ["rundeck_mcp"]
+exclude = []
+defineConstant = { DEBUG = true }
+reportMissingImports = "error"
+reportMissingTypeStubs = false
+pythonVersion = "3.12"
+executionEnvironments = []
+
+[tool.ruff]
+extend-exclude = [
+    ".ipynb_checkpoints",
+    ".pytest_cache",
+    ".venv",
+    ".vscode",
+    "build",
+    "site-packages",
+]
+
+line-length = 120
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle - Error
+    "F",   # pyflakes
+    "B",   # flake8-bugbear
+    "UP",  # pyupgrade
+    "SIM", # flake8-simplify
+    "I",   # isort
+    "D",   # docstrings
+    "W",   # pycodestyle - Warning
+    "C4",  # flake8-comprehensions
+    "ASYNC", # flake8-async
+    "A",   # flake8-builtins
+    "RUF", # ruff specific
+    "BLE", # blind-except
+    "RET", # flake8-return
+    "FBT", # flake8-boolean-trap
+    "ISC", # flake8-implicit-string-concatenation
+    "PIE", # flake8-pie
+]
+
+ignore = [
+    # conflicts with ruff format
+    "ISC001",
+    # Do not require docstrings
+    "D100",
+    "D101",
+    "D102",
+    "D104",
+    "D105",
+    "D106",
+    "D107",
+]
+
+fixable = ["ALL"]
+unfixable = ["B"]
+
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/*" = ['S101']
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+ignore-var-parameters = true
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+
+[dependency-groups]
+dev = [
+    "coverage~=7.8",
+    "pyright~=1.1",
+    "pytest~=8.3",
+    "pytest-httpx~=0.35",
+    "ruff~=0.12.0",
+]
