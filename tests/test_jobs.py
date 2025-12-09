@@ -246,46 +246,50 @@ class TestJobTools(unittest.TestCase):
 
     @patch("rundeck_mcp.tools.jobs.get_client")
     def test_get_job(self, mock_get_client):
-        """Test get_job returns full job details."""
+        """Test get_job returns formatted job details with options table."""
         mock_client = MagicMock()
         mock_client.get.return_value = self.sample_job_data
         mock_get_client.return_value = mock_client
 
         result = get_job("abc-123-def")
 
-        self.assertIsInstance(result, Job)
-        self.assertEqual(result.id, "abc-123-def")
-        self.assertEqual(result.name, "Deploy Application")
-        self.assertIsNotNone(result.options)
-        self.assertEqual(len(result.options), 2)
-        self.assertEqual(result.options[0].name, "version")
-        self.assertTrue(result.options[0].required)
+        self.assertIsInstance(result, str)
+        self.assertIn("## Deploy Application", result)
+        self.assertIn("abc-123-def", result)
+        self.assertIn("### Job Options", result)
+        self.assertIn("| # | Option | Required | Default | Allowed Values |", result)
+        self.assertIn("**version**", result)
+        self.assertIn("🔴 Yes", result)  # Required marker
 
     @patch("rundeck_mcp.tools.jobs.get_client")
     def test_run_job_validates_options(self, mock_get_client):
-        """Test run_job validates required options."""
+        """Test run_job returns formatted error for missing required options."""
         mock_client = MagicMock()
         mock_client.get.return_value = self.sample_job_data
         mock_get_client.return_value = mock_client
 
         # Missing required 'version' option
-        with self.assertRaises(ValueError) as context:
-            run_job("abc-123-def", JobRunRequest(options={"env": "prod"}))
+        result = run_job("abc-123-def", JobRunRequest(options={"env": "prod"}))
 
-        self.assertIn("Required option 'version' is missing", str(context.exception))
+        self.assertIsInstance(result, str)
+        self.assertIn("❌ Cannot run", result)
+        self.assertIn("Required option 'version' is missing", result)
+        self.assertIn("| Option | Required | Default | Allowed Values | Your Value |", result)
+        self.assertIn("**version**", result)
 
     @patch("rundeck_mcp.tools.jobs.get_client")
     def test_run_job_validates_enforced_values(self, mock_get_client):
-        """Test run_job validates enforced option values."""
+        """Test run_job returns formatted error for invalid enforced values."""
         mock_client = MagicMock()
         mock_client.get.return_value = self.sample_job_data
         mock_get_client.return_value = mock_client
 
         # Invalid value for enforced 'env' option
-        with self.assertRaises(ValueError) as context:
-            run_job("abc-123-def", JobRunRequest(options={"version": "1.0", "env": "invalid"}))
+        result = run_job("abc-123-def", JobRunRequest(options={"version": "1.0", "env": "invalid"}))
 
-        self.assertIn("not in allowed values", str(context.exception))
+        self.assertIsInstance(result, str)
+        self.assertIn("❌ Cannot run", result)
+        self.assertIn("not in allowed values", result)
 
     @patch("rundeck_mcp.tools.jobs.get_client")
     def test_run_job_success(self, mock_get_client):
@@ -309,8 +313,11 @@ class TestJobTools(unittest.TestCase):
 
         result = run_job("abc-123-def", JobRunRequest(options={"version": "1.0", "env": "prod"}))
 
-        self.assertEqual(result.id, 12345)
-        self.assertEqual(result.status, "running")
+        self.assertIsInstance(result, str)
+        self.assertIn("✅ Job Started", result)
+        self.assertIn("Deploy Application", result)
+        self.assertIn("12345", result)
+        self.assertIn("running", result)
         mock_client.post.assert_called_once()
 
 
