@@ -71,9 +71,7 @@ def validate_job_options(
         enforced = opt.get("enforced", False)
 
         if enforced and allowed_values and value not in allowed_values:
-            errors.append(
-                f"Option '{name}' value '{value}' is not in allowed values: {allowed_values}"
-            )
+            errors.append(f"Option '{name}' value '{value}' is not in allowed values: {allowed_values}")
 
     return len(errors) == 0, errors
 

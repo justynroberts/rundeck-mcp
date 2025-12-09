@@ -1,7 +1,5 @@
 from typing import Any
 
-import httpx
-
 from rundeck_mcp.client import get_client
 from rundeck_mcp.models import (
     Job,
@@ -10,23 +8,21 @@ from rundeck_mcp.models import (
     JobReference,
     JobRunRequest,
     JobRunResponse,
-    ListResponseModel,
 )
 from rundeck_mcp.utils import format_job_options_for_display, validate_job_options
 
 
-def list_jobs(query: JobQuery) -> ListResponseModel[Job]:
+def list_jobs(query: JobQuery) -> str:
     """List jobs in a Rundeck project with optional filtering.
 
-    Returns a list of jobs matching the specified criteria. Use group_path
-    to filter by job groups, job_filter to search by name, or tags to filter
-    by job tags.
+    Returns a numbered markdown table of jobs. Use the # column to reference
+    jobs in subsequent commands (e.g., "run job 3").
 
     Args:
         query: Query parameters for filtering jobs
 
     Returns:
-        List of Job objects matching the query
+        Markdown table with numbered jobs
 
     Examples:
         List all jobs in a project:
@@ -43,18 +39,14 @@ def list_jobs(query: JobQuery) -> ListResponseModel[Job]:
 
     response = client.get(f"/project/{query.project}/jobs", params=params)
 
+    if not response:
+        return "No jobs found."
+
     jobs = []
     for job_data in response:
-        # Fetch full job details to get options
-        try:
-            full_job = client.get(f"/job/{job_data['id']}")
-            job_data = full_job if isinstance(full_job, dict) else job_data
-        except (httpx.HTTPStatusError, KeyError):
-            pass  # Use basic job data if full fetch fails
-
         jobs.append(_parse_job(job_data))
 
-    return ListResponseModel[Job](response=jobs)
+    return _format_jobs_table(jobs)
 
 
 def get_job(job_id: str) -> Job:
@@ -137,6 +129,26 @@ def run_job(job_id: str, request: JobRunRequest | None = None) -> JobRunResponse
     response = client.post(f"/job/{job_id}/run", json=body)
 
     return _parse_run_response(response)
+
+
+def _format_jobs_table(jobs: list[Job]) -> str:
+    """Format jobs as a numbered markdown table.
+
+    Args:
+        jobs: List of Job objects to format
+
+    Returns:
+        Markdown table string with numbered jobs
+    """
+    lines = []
+    lines.append("| # | Name | Group | Job ID |")
+    lines.append("|---|------|-------|--------|")
+
+    for idx, job in enumerate(jobs, start=1):
+        group = job.group or "-"
+        lines.append(f"| {idx} | {job.name} | {group} | {job.id} |")
+
+    return "\n".join(lines)
 
 
 def _parse_job(data: dict[str, Any] | list) -> Job:

@@ -1,5 +1,6 @@
 import logging
 from collections.abc import AsyncIterator, Callable
+from contextlib import asynccontextmanager
 
 import typer
 from mcp.server.fastmcp import FastMCP
@@ -30,6 +31,7 @@ especially in production environments.
 """
 
 
+@asynccontextmanager
 async def app_lifespan(server: FastMCP) -> AsyncIterator[MCPContext]:
     """Lifespan context manager for the MCP server.
 

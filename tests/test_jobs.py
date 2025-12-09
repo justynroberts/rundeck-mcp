@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
-from rundeck_mcp.models import Job, JobOption, JobQuery, JobRunRequest, ListResponseModel
+from rundeck_mcp.models import Job, JobOption, JobQuery, JobRunRequest
 from rundeck_mcp.tools.jobs import get_job, list_jobs, run_job
 from rundeck_mcp.utils import format_job_options_for_display, validate_job_options
 
@@ -231,21 +231,18 @@ class TestJobTools(unittest.TestCase):
 
     @patch("rundeck_mcp.tools.jobs.get_client")
     def test_list_jobs(self, mock_get_client):
-        """Test list_jobs returns parsed jobs."""
+        """Test list_jobs returns markdown table."""
         mock_client = MagicMock()
-        mock_client.get.side_effect = [
-            self.sample_jobs_list,
-            self.sample_jobs_list[0],
-            self.sample_jobs_list[1],
-        ]
+        mock_client.get.return_value = self.sample_jobs_list
         mock_get_client.return_value = mock_client
 
         query = JobQuery(project="myproject")
         result = list_jobs(query)
 
-        self.assertIsInstance(result, ListResponseModel)
-        self.assertEqual(len(result.response), 2)
-        self.assertEqual(result.response[0].name, "Job 1")
+        self.assertIsInstance(result, str)
+        self.assertIn("| # | Name | Group | Job ID |", result)
+        self.assertIn("| 1 | Job 1 |", result)
+        self.assertIn("| 2 | Job 2 |", result)
 
     @patch("rundeck_mcp.tools.jobs.get_client")
     def test_get_job(self, mock_get_client):
