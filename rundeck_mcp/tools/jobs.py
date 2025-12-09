@@ -69,6 +69,12 @@ def get_job(job_id: str) -> str:
     client = get_client()
     response = client.get(f"/job/{job_id}")
 
+    # Handle list response (API returns list for single job lookup)
+    if isinstance(response, list):
+        if not response:
+            raise ValueError("Job not found")
+        response = response[0]
+
     job = _parse_job(response)
     return _format_job_details(job)
 
@@ -104,8 +110,15 @@ def run_job(job_id: str, request: JobRunRequest | None = None, *, confirmed: boo
 
     # Fetch job to validate options
     job_response = client.get(f"/job/{job_id}")
+
+    # Handle list response (API returns list for single job lookup)
+    if isinstance(job_response, list):
+        if not job_response:
+            raise ValueError("Job not found")
+        job_response = job_response[0]
+
     job = _parse_job(job_response)
-    job_options = job_response.get("options") if isinstance(job_response, dict) else None
+    job_options = job_response.get("options")
 
     provided_options = request.options if request else None
 

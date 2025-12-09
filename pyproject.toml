@@ -1,6 +1,6 @@
 [project]
 name = "rundeck-mcp"
-version = "0.1.9"
+version = "0.1.10"
 description = "Rundeck MCP Server - Model Context Protocol server for Rundeck job automation"
 readme = "README.md"
 requires-python = "~=3.12.0"
