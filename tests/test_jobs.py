@@ -292,8 +292,24 @@ class TestJobTools(unittest.TestCase):
         self.assertIn("not in allowed values", result)
 
     @patch("rundeck_mcp.tools.jobs.get_client")
+    def test_run_job_preview(self, mock_get_client):
+        """Test run_job shows preview without confirmed=True."""
+        mock_client = MagicMock()
+        mock_client.get.return_value = self.sample_job_data
+        mock_get_client.return_value = mock_client
+
+        result = run_job("abc-123-def", JobRunRequest(options={"version": "1.0", "env": "prod"}))
+
+        self.assertIsInstance(result, str)
+        self.assertIn("🚀 Ready to run", result)
+        self.assertIn("Options to be used", result)
+        self.assertIn("| Option | Value |", result)
+        self.assertIn("confirmed=True", result)
+        mock_client.post.assert_not_called()  # Should NOT execute yet
+
+    @patch("rundeck_mcp.tools.jobs.get_client")
     def test_run_job_success(self, mock_get_client):
-        """Test run_job executes successfully with valid options."""
+        """Test run_job executes successfully with confirmed=True."""
         mock_client = MagicMock()
         mock_client.get.return_value = self.sample_job_data
         mock_client.post.return_value = {
@@ -311,7 +327,7 @@ class TestJobTools(unittest.TestCase):
         }
         mock_get_client.return_value = mock_client
 
-        result = run_job("abc-123-def", JobRunRequest(options={"version": "1.0", "env": "prod"}))
+        result = run_job("abc-123-def", JobRunRequest(options={"version": "1.0", "env": "prod"}), confirmed=True)
 
         self.assertIsInstance(result, str)
         self.assertIn("✅ Job Started", result)

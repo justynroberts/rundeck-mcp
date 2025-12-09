@@ -557,7 +557,7 @@ wheels = [
 
 [[package]]
 name = "rundeck-mcp"
-version = "0.1.6"
+version = "0.1.8"
 source = { editable = "." }
 dependencies = [
     { name = "httpx" },

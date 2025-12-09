@@ -73,32 +73,32 @@ def get_job(job_id: str) -> str:
     return _format_job_details(job)
 
 
-def run_job(job_id: str, request: JobRunRequest | None = None) -> str:
+def run_job(job_id: str, request: JobRunRequest | None = None, *, confirmed: bool = False) -> str:
     """Execute a Rundeck job with optional parameters.
+
+    IMPORTANT: This is a two-step process:
+    1. First call without confirmed=True shows options and asks for confirmation
+    2. Second call with confirmed=True actually executes the job
 
     Before running, this tool validates that:
     - All required options are provided (or have defaults)
     - Option values match allowed values for enforced options
 
-    If validation fails, returns a formatted error with an options table showing
-    what's required and allowed values - ask the user for the missing values.
-
     Args:
         job_id: The job UUID to execute
         request: Optional execution parameters including options
+        confirmed: Set to True to actually execute (after user confirms)
 
     Returns:
-        Formatted string with execution result or validation error with options table
+        Formatted string with options preview (step 1) or execution result (step 2)
 
     Examples:
-        Run a job with no options:
-        >>> result = run_job("abc-123-def")
+        Step 1 - Preview options:
+        >>> result = run_job("abc-123-def", JobRunRequest(options={"env": "prod"}))
+        # Shows options table, asks user to confirm
 
-        Run with options:
-        >>> result = run_job(
-        ...     "abc-123-def",
-        ...     JobRunRequest(options={"version": "1.2.3", "env": "prod"})
-        ... )
+        Step 2 - Execute after confirmation:
+        >>> result = run_job("abc-123-def", JobRunRequest(options={"env": "prod"}), confirmed=True)
     """
     client = get_client()
 
@@ -114,6 +114,10 @@ def run_job(job_id: str, request: JobRunRequest | None = None) -> str:
 
     if not is_valid:
         return _format_validation_error(job, errors, provided_options)
+
+    # If not confirmed, show preview and ask for confirmation
+    if not confirmed:
+        return _format_run_preview(job, provided_options)
 
     # Build request body
     body = request.to_request_body() if request else {}
@@ -134,6 +138,7 @@ def _format_jobs_table(jobs: list[Job]) -> str:
         Markdown table string with numbered jobs
     """
     lines = []
+    lines.append("IMPORTANT: Display this markdown table exactly as shown - do not summarize or reformat.\n")
     lines.append(f"**{len(jobs)} jobs found.** Use # to reference jobs (e.g., 'run job 3'):\n")
     lines.append("| # | Name | Group | Job ID |")
     lines.append("|---|------|-------|--------|")
@@ -142,7 +147,8 @@ def _format_jobs_table(jobs: list[Job]) -> str:
         group = job.group or "-"
         lines.append(f"| {idx} | {job.name} | {group} | {job.id} |")
 
-    lines.append("\n*Display this table to the user exactly as shown.*")
+    lines.append("\n---")
+    lines.append("STOP: You must show the table above to the user exactly as formatted. Do not summarize.")
 
     return "\n".join(lines)
 
@@ -216,6 +222,61 @@ def _format_job_details(job: Job) -> str:
         lines.append("")
 
     lines.append("*To run this job, use: run_job with the job_id and required options.*")
+
+    return "\n".join(lines)
+
+
+def _format_run_preview(job: Job, provided_options: dict[str, str] | None) -> str:
+    """Format job execution preview with options table for user confirmation.
+
+    Args:
+        job: The job to execute
+        provided_options: Options that will be used
+
+    Returns:
+        Formatted preview asking user to confirm or modify options
+    """
+    lines = []
+    lines.append(f"## 🚀 Ready to run: {job.name}")
+    lines.append("")
+
+    if job.description:
+        lines.append(f"_{job.description}_")
+        lines.append("")
+
+    if job.options:
+        lines.append("### Options to be used:")
+        lines.append("")
+        lines.append("| Option | Value | Default | Required |")
+        lines.append("|--------|-------|---------|----------|")
+
+        for opt in job.options:
+            # Determine what value will be used
+            if provided_options and opt.name in provided_options:
+                value = f"✅ `{provided_options[opt.name]}`"
+            elif opt.value:
+                value = f"_(default)_ `{opt.value}`"
+            elif opt.required:
+                value = "❌ **MISSING**"
+            else:
+                value = "_(none)_"
+
+            default = f"`{opt.value}`" if opt.value else "-"
+            required = "🔴 Yes" if opt.required else "No"
+
+            lines.append(f"| **{opt.name}** | {value} | {default} | {required} |")
+
+        lines.append("")
+    else:
+        lines.append("_This job has no options._")
+        lines.append("")
+
+    lines.append("---")
+    lines.append("**Ask the user:** Ready to run this job with these options?")
+    lines.append("- To proceed: call run_job again with `confirmed=True`")
+    lines.append("- To modify: ask user which options to change, then call run_job with new values")
+    lines.append("")
+    lines.append("STOP: Show this table to user and wait for their confirmation before executing.")
 
     return "\n".join(lines)
 
