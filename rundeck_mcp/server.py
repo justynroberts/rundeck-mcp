@@ -19,6 +19,11 @@ MCP_SERVER_INSTRUCTIONS = """
 When the user asks about Rundeck jobs or executions, use the available tools to query
 the Rundeck API.
 
+CRITICAL: When listing jobs, you MUST display the numbered markdown table exactly as
+returned by list_jobs. Do NOT summarize or reorganize the results. The user needs to
+see the exact table with job numbers (# column) so they can reference jobs by number
+(e.g., "run job 3"). Always show the full table first, then add any commentary after.
+
 When running a job with options:
 1. First use get_job to retrieve the job definition and see available options
 2. Review the options_summary field to understand required options and allowed values

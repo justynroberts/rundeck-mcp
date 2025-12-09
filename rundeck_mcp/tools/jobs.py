@@ -141,12 +141,15 @@ def _format_jobs_table(jobs: list[Job]) -> str:
         Markdown table string with numbered jobs
     """
     lines = []
+    lines.append(f"**{len(jobs)} jobs found.** Use # to reference jobs (e.g., 'run job 3'):\n")
     lines.append("| # | Name | Group | Job ID |")
     lines.append("|---|------|-------|--------|")
 
     for idx, job in enumerate(jobs, start=1):
         group = job.group or "-"
         lines.append(f"| {idx} | {job.name} | {group} | {job.id} |")
+
+    lines.append("\n*Display this table to the user exactly as shown.*")
 
     return "\n".join(lines)
 
