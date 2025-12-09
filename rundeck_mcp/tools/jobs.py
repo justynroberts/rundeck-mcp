@@ -184,7 +184,8 @@ def _format_job_details(job: Job) -> str:
         lines.append("")
 
     lines.append(f"**Job ID:** `{job.id}`")
-    lines.append(f"**Project:** {job.project}")
+    if job.project:
+        lines.append(f"**Project:** {job.project}")
     if job.group:
         lines.append(f"**Group:** {job.group}")
     lines.append(f"**Enabled:** {'Yes' if job.enabled else 'No'}")
@@ -405,7 +406,7 @@ def _parse_job(data: dict[str, Any] | list) -> Job:
         id=data["id"],
         name=data["name"],
         group=data.get("group"),
-        project=data["project"],
+        project=data.get("project"),  # May be None from /job/{id} endpoint
         description=data.get("description"),
         href=data.get("href"),
         permalink=data.get("permalink"),

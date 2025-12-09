@@ -76,7 +76,7 @@ class Job(BaseModel):
     id: str = Field(description="The job UUID")
     name: str = Field(description="The job name")
     group: str | None = Field(default=None, description="The job group path (e.g., 'deploy/production')")
-    project: str = Field(description="The project this job belongs to")
+    project: str | None = Field(default=None, description="The project this job belongs to")
     description: str | None = Field(default=None, description="Job description")
     href: str | None = Field(default=None, description="API URL for this job")
     permalink: str | None = Field(default=None, description="Web UI URL for this job")
